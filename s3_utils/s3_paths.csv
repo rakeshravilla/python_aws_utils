@@ -1,0 +1,3 @@
+source_bucket,source_key,destination_bucket,destination_key
+my-source-bucket,path/to/source/file.txt,my-destination-bucket,new/path/destination/file.txt
+another-source-bucket,another/path/to/source/image.jpg,yet-another-destination-bucket,images/new-image.jpg
