@@ -1,0 +1,25 @@
+{
+    "pipelines": [
+      {
+        "pipeline_id": "df-0123456789EXAMPLE1",
+        "pipeline_name": "PipelineOne",
+        "parameterValues": [
+          {
+            "id": "Param1",
+            "stringValue": "Value1"
+          }
+        ]
+      },
+      {
+        "pipeline_id": "df-0123456789EXAMPLE2",
+        "pipeline_name": "PipelineTwo",
+        "parameterValues": [
+          {
+            "id": "Param2",
+            "stringValue": "Value2"
+          }
+        ]
+      }
+    ]
+  }
+  
