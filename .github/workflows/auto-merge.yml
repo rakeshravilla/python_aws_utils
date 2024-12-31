@@ -5,16 +5,34 @@ on:
     types:
       - opened
       - review_requested
+      - review_submitted
+
+permissions:
+  pull-requests: write
+  contents: write
+  actions: read
 
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step 1: Wait for the PR to be reviewed and approved
+      # Step 2: Log the event data to debug trigger
+      - name: Log Event Data
+        run: echo "${{ toJson(github.event) }}"
+
+      # Step 3: Install GitHub CLI to perform PR merge
+      - name: Install GitHub CLI
+        run: |
+          curl -fsSL https://cli.github.com/packages/github-cli.repo | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh
+
+      # Step 4: Wait for PR approval
       - name: Wait for PR approval
         if: github.event.action == 'opened' || github.event.action == 'review_requested' || github.event.review.state == 'approved'
         uses: actions/github-script@v6
@@ -36,7 +54,7 @@ jobs:
               core.setFailed('PR not approved. Exiting.');
             }
 
-      # Step 2: Ensure all checks pass
+      # Step 5: Wait for PR checks to complete (CI checks, etc.)
       - name: Wait for PR checks to complete
         if: github.event.action == 'opened' || github.event.action == 'review_submitted'
         uses: actions/github-script@v6
@@ -53,7 +71,7 @@ jobs:
               core.setFailed("Not all checks have passed. Exiting.");
             }
 
-      # Step 3: Merge Pull Request if it’s approved and all checks pass
+      # Step 6: Merge the PR once all conditions are met
       - name: Merge Pull Request
         if: github.event.action == 'opened' || github.event.action == 'review_submitted'
         env:
