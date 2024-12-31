@@ -1,0 +1,12 @@
+2024-12-31 21:31:14,628:INFO:Function name: lambda_test_uat_run
+2024-12-31 21:31:14,628:INFO:Test payload: {
+  "pipeline_Name": "hello",
+  "time_stamp": "2024"
+}
+2024-12-31 21:31:14,630:ERROR:Error invoking Lambda function: Unable to locate credentials
+2024-12-31 21:32:05,585:INFO:Function name: lambda_test_dev_run
+2024-12-31 21:32:05,585:INFO:Test payload: {
+  "pipeline_Name": "pipeline_1",
+  "time_stamp": "2021-07-01T00:00:00"
+}
+2024-12-31 21:32:05,587:ERROR:Error invoking Lambda function: Unable to locate credentials
