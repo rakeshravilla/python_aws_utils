@@ -1,0 +1,35 @@
+name: Auto Merge PR
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: github.event.review.state == 'approved'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Merge pull request
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo, number } = context.issue;
+            const pullRequest = await github.pulls.get({
+              owner,
+              repo,
+              pull_number: number,
+            });
+
+            if (pullRequest.data.state === 'open' && pullRequest.data.mergeable) {
+              await github.pulls.merge({
+                owner,
+                repo,
+                pull_number: number,
+                merge_method: 'squash',
+              });
+            }
