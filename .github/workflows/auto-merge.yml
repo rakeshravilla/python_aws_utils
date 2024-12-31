@@ -20,18 +20,19 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { owner, repo, number } = context.payload.pull_request;
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
             const pullRequest = await github.rest.pulls.get({
               owner,
               repo,
-              pull_number: number,
+              pull_number,
             });
 
             if (pullRequest.data.state === 'open' && pullRequest.data.mergeable) {
               await github.rest.pulls.merge({
                 owner,
                 repo,
-                pull_number: number,
+                pull_number,
                 merge_method: 'squash',
               });
             }
