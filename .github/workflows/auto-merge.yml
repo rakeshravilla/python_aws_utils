@@ -21,14 +21,14 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { owner, repo, number } = context.payload.pull_request;
-            const pullRequest = await github.pulls.get({
+            const pullRequest = await github.rest.pulls.get({
               owner,
               repo,
               pull_number: number,
             });
 
             if (pullRequest.data.state === 'open' && pullRequest.data.mergeable) {
-              await github.pulls.merge({
+              await github.rest.pulls.merge({
                 owner,
                 repo,
                 pull_number: number,
