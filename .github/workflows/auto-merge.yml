@@ -4,8 +4,6 @@ on:
   pull_request:
     types:
       - opened
-      - review_requested
-      - review_submitted
 
 permissions:
   pull-requests: write
@@ -32,31 +30,8 @@ jobs:
           sudo apt update
           sudo apt install gh
 
-      # Step 4: Wait for PR approval
-      - name: Wait for PR approval
-        if: github.event.action == 'opened' || github.event.action == 'review_requested' || github.event.review.state == 'approved'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const pr = context.payload.pull_request;
-            if (pr.draft) {
-              core.setFailed('The PR is still a draft. Exiting.');
-            }
-
-            const reviews = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr.number,
-            });
-
-            const approvedReviews = reviews.data.filter(review => review.state === 'APPROVED');
-            if (approvedReviews.length === 0) {
-              core.setFailed('PR not approved. Exiting.');
-            }
-
-      # Step 5: Wait for PR checks to complete (CI checks, etc.)
+      # Step 4: Wait for PR checks to complete (CI checks, etc.)
       - name: Wait for PR checks to complete
-        if: github.event.action == 'opened' || github.event.action == 'review_submitted'
         uses: actions/github-script@v6
         with:
           script: |
@@ -71,9 +46,8 @@ jobs:
               core.setFailed("Not all checks have passed. Exiting.");
             }
 
-      # Step 6: Merge the PR once all conditions are met
+      # Step 5: Merge the PR once all checks pass
       - name: Merge Pull Request
-        if: github.event.action == 'opened' || github.event.action == 'review_submitted'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
