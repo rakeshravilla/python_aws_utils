@@ -20,7 +20,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { owner, repo, number } = context.issue;
+            const { owner, repo, number } = context.payload.pull_request;
             const pullRequest = await github.pulls.get({
               owner,
               repo,
