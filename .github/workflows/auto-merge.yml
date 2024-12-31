@@ -2,37 +2,62 @@ name: Auto Merge PR
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-  pull_request_review:
-    types: [submitted]
+    types:
+      - opened
+      - review_requested
 
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-    if: github.event.review.state == 'approved' || github.event_name == 'pull_request'
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
 
-      - name: Merge pull request
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 1: Wait for the PR to be reviewed and approved
+      - name: Wait for PR approval
+        if: github.event.action == 'opened' || github.event.action == 'review_requested' || github.event.review.state == 'approved'
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { owner, repo } = context.repo;
-            const pull_number = context.payload.pull_request.number;
-            const pullRequest = await github.rest.pulls.get({
-              owner,
-              repo,
-              pull_number,
+            const pr = context.payload.pull_request;
+            if (pr.draft) {
+              core.setFailed('The PR is still a draft. Exiting.');
+            }
+
+            const reviews = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
             });
 
-            if (pullRequest.data.state === 'open' && pullRequest.data.mergeable) {
-              await github.rest.pulls.merge({
-                owner,
-                repo,
-                pull_number,
-                merge_method: 'squash',
-              });
+            const approvedReviews = reviews.data.filter(review => review.state === 'APPROVED');
+            if (approvedReviews.length === 0) {
+              core.setFailed('PR not approved. Exiting.');
             }
+
+      # Step 2: Ensure all checks pass
+      - name: Wait for PR checks to complete
+        if: github.event.action == 'opened' || github.event.action == 'review_submitted'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const checkRuns = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.payload.pull_request.head.sha
+            });
+
+            const statuses = checkRuns.data.check_runs.map(run => run.conclusion);
+            if (!statuses.every(status => status === 'success')) {
+              core.setFailed("Not all checks have passed. Exiting.");
+            }
+
+      # Step 3: Merge Pull Request if it’s approved and all checks pass
+      - name: Merge Pull Request
+        if: github.event.action == 'opened' || github.event.action == 'review_submitted'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Attempting to merge PR..."
+          gh pr merge "$GITHUB_REF_NAME" --merge --delete-branch
